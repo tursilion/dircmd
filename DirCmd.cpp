@@ -21,9 +21,13 @@ int main(int argc, char* argv[])
 
 	if (argv[1][0] == '-') {
 		threads = atoi(&argv[1][1]);
-		if ((threads < 1) || (threads > MAXIMUM_WAIT_OBJECTS)) {
+		if (threads < 1) {
 			printf("Thread count out of range.\n");
 			return -1;
+		}
+		if (threads > MAXIMUM_WAIT_OBJECTS) {
+			printf("Thread count too large, limiting to %d\n", MAXIMUM_WAIT_OBJECTS);
+			threads = MAXIMUM_WAIT_OBJECTS;
 		}
 		arg=2;
 	}
