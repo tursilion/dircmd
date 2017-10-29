@@ -9,7 +9,7 @@ This is probably unnecessary, both CMD and PowerShell can do it, not to mention 
 
 This lets you run any command over all files in a folder.
 
-Download the latest release zip here: [https://github.com/tursilion/dircmd/raw/master/dist/dircmd.zip](https://github.com/tursilion/classic99/raw/master/dist/dircmd.zip)
+Download the latest release zip here: [https://github.com/tursilion/dircmd/raw/master/dist/dircmd.zip](https://github.com/tursilion/dircmd/raw/master/dist/dircmd.zip)
 
 Want to donate?
 ---------------
