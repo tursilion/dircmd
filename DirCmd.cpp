@@ -1,39 +1,40 @@
 //
 // DIRCMD loops through a filemask in a single folder and runs your
 // command for each file found. 
+// 1.3 add subfolder support
 //
 
 #include <afxwin.h>
 
 int threads = 1;
 int arg=1;
+bool recurse = false;
 
-int main(int argc, char* argv[])
-{
-	if (argc < 3) {
-		printf("DirCmd <dirspec> <command...>\n");
-		printf("  ie: dircmd [-x] *.txt type $f\n");
-		printf("  'x' is number of threads to run, 1-%d\n", MAXIMUM_WAIT_OBJECTS);
-		printf("  Replacements: $f - current filename\n");
-		printf("  v1.2\n");
-		return 1;
-	}
+int doFolder(const char *path, int argc, char* argv[]) {
+    char pathbuf[1024];
 
-	if (argv[1][0] == '-') {
-		threads = atoi(&argv[1][1]);
-		if (threads < 1) {
-			printf("Thread count out of range.\n");
-			return -1;
-		}
-		if (threads > MAXIMUM_WAIT_OBJECTS) {
-			printf("Thread count too large, limiting to %d\n", MAXIMUM_WAIT_OBJECTS);
-			threads = MAXIMUM_WAIT_OBJECTS;
-		}
-		arg=2;
-	}
+    if (recurse) {
+        // do subfolders first
+        sprintf(pathbuf, "%s\\*", path);
+        WIN32_FIND_DATA data;
+	    HANDLE hSrch=FindFirstFile(pathbuf, &data);
+        if (hSrch != INVALID_HANDLE_VALUE) do {
+            if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                if ((0 == strcmp(data.cFileName,".")) || (0 == strcmp(data.cFileName,".."))) continue;
+                if (data.dwFileAttributes&FILE_ATTRIBUTE_SYSTEM) continue;
 
-	WIN32_FIND_DATA data;
-	HANDLE hSrch=FindFirstFile(argv[arg], &data);
+                sprintf(pathbuf, "%s\\%s", path, data.cFileName);
+                if (doFolder(pathbuf, argc, argv) < 0) return -1;
+            }
+        } while (FindNextFile(hSrch, &data));
+		FindClose(hSrch);
+		hSrch=INVALID_HANDLE_VALUE;
+    }
+
+    sprintf(pathbuf, "%s\\%s", path, argv[arg]);
+    printf("Checking %s\n", pathbuf);
+    WIN32_FIND_DATA data;
+	HANDLE hSrch=FindFirstFile(pathbuf, &data);
 	HANDLE processwait[MAXIMUM_WAIT_OBJECTS];
 	HANDLE dummywait = CreateMutex(NULL, FALSE, NULL);
 
@@ -41,7 +42,7 @@ int main(int argc, char* argv[])
 		processwait[idx] = dummywait;
 	}
 
-	while (NULL != hSrch) {
+	while (INVALID_HANDLE_VALUE != hSrch) {
 		CString cmd;
 		int slot = -1;
 
@@ -78,6 +79,7 @@ int main(int argc, char* argv[])
 				if (i>arg+1) cmd+=" ";
 				tmp=argv[i];
 				tmp.Replace("$f", data.cFileName);
+				tmp.Replace("$p", path);
 				cmd+=tmp;
 			}
  
@@ -97,8 +99,8 @@ int main(int argc, char* argv[])
 		}
 
 		if (!FindNextFile(hSrch, &data)) {
-			CloseHandle(hSrch);
-			hSrch=NULL;
+			FindClose(hSrch);
+			hSrch=INVALID_HANDLE_VALUE;
 		}
 	}
 
@@ -113,5 +115,41 @@ int main(int argc, char* argv[])
 	}
 	CloseHandle(dummywait);
 
-	return 0;
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+	if (argc < 3) {
+		printf("DirCmd <dirspec> <command...>\n");
+		printf("  ie: dircmd [/s] [-x] *.txt type $f\n");
+        printf("  /s to recurse subfolders\n");
+		printf("  'x' is number of threads to run, 1-%d\n", MAXIMUM_WAIT_OBJECTS);
+        printf("  Note: use the number, like -9, not '-x' literally\n");
+		printf("  Replacements: $f - current filename\n");
+        printf("  Replacements: $p - current path\n");
+		printf("  v1.3\n");
+		return 1;
+	}
+
+    // order matters
+    if (0 == strcmp(argv[arg], "/s")) {
+        recurse = true;
+        ++arg;
+    }
+
+	if (argv[arg][0] == '-') {
+		threads = atoi(&argv[1][1]);
+		if (threads < 1) {
+			printf("Thread count out of range.\n");
+			return -1;
+		}
+		if (threads > MAXIMUM_WAIT_OBJECTS) {
+			printf("Thread count too large, limiting to %d\n", MAXIMUM_WAIT_OBJECTS);
+			threads = MAXIMUM_WAIT_OBJECTS;
+		}
+		++arg;
+	}
+
+    return doFolder(".", argc, argv);
 }
