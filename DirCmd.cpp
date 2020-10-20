@@ -9,6 +9,7 @@
 int threads = 1;
 int arg=1;
 bool recurse = false;
+bool verbose = true;
 
 int doFolder(const char *path, int argc, char* argv[]) {
     char pathbuf[1024];
@@ -32,7 +33,7 @@ int doFolder(const char *path, int argc, char* argv[]) {
     }
 
     sprintf(pathbuf, "%s\\%s", path, argv[arg]);
-    printf("Checking %s\n", pathbuf);
+    if (verbose) printf("Checking %s\n", pathbuf);
     WIN32_FIND_DATA data;
 	HANDLE hSrch=FindFirstFile(pathbuf, &data);
 	HANDLE processwait[MAXIMUM_WAIT_OBJECTS];
@@ -57,7 +58,7 @@ int doFolder(const char *path, int argc, char* argv[]) {
 			if (slot == -1) {
 				DWORD ret = WaitForMultipleObjects(threads, processwait, FALSE, 1000);
 				if (WAIT_TIMEOUT == ret) {
-					if (threads > 1) printf("* DEBUG * waiting for free slot\n");
+					if (threads > 1) if (verbose) printf("* DEBUG * waiting for free slot\n");
 					ret = WaitForMultipleObjects(threads, processwait, FALSE, INFINITE);
 				}
 
@@ -83,7 +84,7 @@ int doFolder(const char *path, int argc, char* argv[]) {
 				cmd+=tmp;
 			}
  
-			printf(">%s\n", (const char*)cmd);
+			if (verbose) printf(">%s\n", (const char*)cmd);
 
 			STARTUPINFO info;
 			PROCESS_INFORMATION process;
@@ -122,7 +123,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 3) {
 		printf("DirCmd <dirspec> <command...>\n");
-		printf("  ie: dircmd [/s] [-x] *.txt type $f\n");
+		printf("  ie: dircmd [/s] [/q] [-x] *.txt type $f\n");
         printf("  /s to recurse subfolders\n");
 		printf("  'x' is number of threads to run, 1-%d\n", MAXIMUM_WAIT_OBJECTS);
         printf("  Note: use the number, like -9, not '-x' literally\n");
@@ -135,6 +136,11 @@ int main(int argc, char* argv[])
     // order matters
     if (0 == strcmp(argv[arg], "/s")) {
         recurse = true;
+        ++arg;
+    }
+
+    if (0 == strcmp(argv[arg], "/q")) {
+        verbose = false;
         ++arg;
     }
 
