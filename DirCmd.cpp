@@ -12,7 +12,7 @@ bool recurse = false;
 bool verbose = true;
 
 int doFolder(const char *path, int argc, char* argv[]) {
-    char pathbuf[1024];
+    char pathbuf[4096];
 
     if (recurse) {
         // do subfolders first
@@ -76,11 +76,17 @@ int doFolder(const char *path, int argc, char* argv[]) {
 			cmd="";
 			for (int i=arg+1; i<argc; i++) {
 				CString tmp;
+                CString nameonly = data.cFileName;
+                int p = nameonly.ReverseFind('.');
+                if (p != -1) {
+                    nameonly = nameonly.Left(p);
+                }
 
 				if (i>arg+1) cmd+=" ";
 				tmp=argv[i];
 				tmp.Replace("$f", data.cFileName);
 				tmp.Replace("$p", path);
+                tmp.Replace("$n", nameonly);
 				cmd+=tmp;
 			}
  
@@ -129,7 +135,8 @@ int main(int argc, char* argv[])
         printf("  Note: use the number, like -9, not '-x' literally\n");
 		printf("  Replacements: $f - current filename\n");
         printf("  Replacements: $p - current path\n");
-		printf("  v1.3\n");
+        printf("  Replacements: $n - current name (filename with no extension)\n");
+        printf("  v1.4\n");
 		return 1;
 	}
 
@@ -145,7 +152,7 @@ int main(int argc, char* argv[])
     }
 
 	if (argv[arg][0] == '-') {
-		threads = atoi(&argv[1][1]);
+		threads = atoi(&argv[arg][1]);
 		if (threads < 1) {
 			printf("Thread count out of range.\n");
 			return -1;

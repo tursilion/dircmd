@@ -4,7 +4,7 @@
 // the internet age. ;)
 //
 //
-// (C) 2015 Mike Brent aka Tursi aka HarmlessLion.com
+// (C) 2025 Mike Brent aka Tursi aka HarmlessLion.com
 // This software is provided AS-IS. No warranty
 // express or implied is provided.
 //
@@ -47,8 +47,3 @@
 //
 // http://harmlesslion.com - visit the web page for contact info
 //
-
-
--if you need to use quotes (ie: around filenames with spaces), pass \"
--'$f' is now universally replaced, instead of only at the beginning of a word
--pass -[1-31] at the start for number of simultaneous processes to spawn (the upper limit depends on your system)
