@@ -4,3 +4,5 @@ This is probably unnecessary, both CMD and PowerShell can do it, not to mention 
 But it was useful to me, so it's still here.
 
 This lets you run any command over all files in a folder.
+
+Dist zip properly updated with actual version 1.4 now.
